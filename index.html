@@ -80,6 +80,63 @@
     <svg class="pen" width="120" height="36" viewBox="0 0 120 36" aria-label="Opening the book"><path d="M6 26 C 26 6, 44 6, 60 18 S 96 30, 114 10" fill="none" stroke="#2a2d33" stroke-width="2" stroke-linecap="round"/></svg>
   </div>
 </div>
+<style>
+  #language-tools{position:fixed;top:max(12px,env(safe-area-inset-top));left:12px;z-index:9;pointer-events:auto;font:14px/1.4 system-ui,sans-serif;color:#1c2433}
+  #language-tools .controls{display:flex;align-items:center;gap:7px;padding:7px 9px;border:1px solid #b9aa90;border-radius:12px;background:#fff9edee;box-shadow:0 2px 12px #0002}
+  #language-tools select,#language-tools button{font:inherit;color:inherit;background:#fff;border:1px solid #aaa;border-radius:7px;padding:5px 7px;cursor:pointer}
+  #language-panel{margin-top:7px;width:min(340px,calc(100vw - 24px));max-height:60vh;overflow:auto;box-sizing:border-box;background:#fffaf0;border:1px solid #b9aa90;border-radius:12px;padding:13px;box-shadow:0 5px 20px #0003}
+  #language-panel[hidden]{display:none}
+  #language-panel h2{font-size:17px;margin:0 0 7px}
+  #language-panel p{margin:0 0 9px}
+  #language-panel textarea{display:block;box-sizing:border-box;width:100%;height:110px;resize:vertical;font:13px/1.5 system-ui,sans-serif;padding:8px;border:1px solid #bbb;border-radius:7px;background:#fff}
+  #language-panel .actions{display:flex;gap:8px;align-items:center;margin:8px 0}
+  #language-panel small{display:block;color:#655c4f}
+</style>
+<aside id="language-tools" aria-label="Language selection and bilingual study summary">
+  <div class="controls"><label for="language-choice">语言 / Language</label><select id="language-choice"><option value="zh">中文</option><option value="en">English</option></select><button type="button" id="language-toggle" aria-expanded="false" aria-controls="language-panel">导览</button></div>
+  <section id="language-panel" hidden aria-live="polite">
+    <h2 id="language-heading"></h2><p id="language-intro"></p>
+    <textarea id="language-output" readonly aria-label="Selectable bilingual lesson summary"></textarea>
+    <div class="actions"><button type="button" id="language-copy"></button><span id="language-status" role="status"></span></div>
+    <small id="language-limit"></small>
+  </section>
+</aside>
+<script>
+(() => {
+  'use strict';
+  const copy = {
+    zh:{toggle:'导览',heading:'第 1 课：能量储存',intro:'选择语言后，可阅读或复制对应语言的学习摘要。',button:'复制中文摘要',done:'已复制',fallback:'请手动复制文本',limit:'说明：原作者的 3D 课本及其动态内容仍为英语；这里提供双语导览和摘要，不代表整个课本已翻译。',summary:'Every Joule · 第 1 课：能量储存\n\n物体可以将能量储存在八种形式中：动能、内能（热能储存）、化学能、重力势能、弹性势能、磁能、静电势能和核能。\n\n能量可以在储存形式之间转移，但不会凭空产生或消失。\n\n原始资料：sources.html；教师说明：teachers.html。'},
+    en:{toggle:'Guide',heading:'Lesson 1: Energy stores',intro:'Choose a language to read or copy the lesson summary.',button:'Copy English summary',done:'Copied',fallback:'Please copy the text manually',limit:'Note: The original 3D book and its dynamic content remain in English. This adds a bilingual guide and summary, not a complete translation of the book.',summary:'Every Joule · Lesson 1: Energy stores\n\nEnergy can be stored in eight ways: kinetic, internal (thermal), chemical, gravitational potential, elastic potential, magnetic, electrostatic and nuclear.\n\nEnergy transfers between stores, but it is not created or destroyed.\n\nSources: sources.html; teacher notes: teachers.html.'}
+  };
+  const picker=document.getElementById('language-choice');
+  const panel=document.getElementById('language-panel');
+  const toggle=document.getElementById('language-toggle');
+  const output=document.getElementById('language-output');
+  let saved=null;
+  try{saved=localStorage.getItem('every-joule-language')}catch(_e){}
+  const requested=new URLSearchParams(location.search).get('lang');
+  picker.value=(requested==='zh'||requested==='en')?requested:(saved==='zh'||saved==='en'?saved:'zh');
+  function render(){
+    const lang=picker.value, t=copy[lang];
+    panel.lang=lang==='zh'?'zh-CN':'en';
+    toggle.textContent=t.toggle;
+    document.getElementById('language-heading').textContent=t.heading;
+    document.getElementById('language-intro').textContent=t.intro;
+    document.getElementById('language-copy').textContent=t.button;
+    document.getElementById('language-limit').textContent=t.limit;
+    document.getElementById('language-status').textContent='';
+    output.value=t.summary;
+    try{localStorage.setItem('every-joule-language',lang)}catch(_e){}
+  }
+  picker.addEventListener('change',render);
+  toggle.addEventListener('click',()=>{const open=panel.hidden;panel.hidden=!open;toggle.setAttribute('aria-expanded',String(open));});
+  document.getElementById('language-copy').addEventListener('click',async()=>{
+    try{await navigator.clipboard.writeText(output.value);document.getElementById('language-status').textContent=copy[picker.value].done;}
+    catch(_e){output.focus();output.select();document.getElementById('language-status').textContent=copy[picker.value].fallback;}
+  });
+  render();
+})();
+</script>
 <div id="nogl" role="alert"><div><h1 style="font:600 24px Georgia,serif;margin:0 0 10px">This book needs WebGL</h1><p style="font:16px/1.5 Georgia,serif;max-width:460px;margin:0 auto">Your browser could not start 3D graphics. Try a recent Chrome, Edge, Firefox or Safari, or turn on hardware acceleration. The <a href="teachers.html">teachers' page</a> and the text of every lesson still work without it.</p></div></div>
 <noscript><p style="position:fixed;inset:auto 0 0 0;padding:12px;background:#fff;text-align:center">Every Joule needs JavaScript to open the book.</p></noscript>
 </body>
